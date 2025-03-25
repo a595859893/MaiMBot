@@ -4,7 +4,7 @@ import os
 
 from loguru import logger
 from nonebot import get_driver, on_message, require
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageSegment,MessageEvent
+from nonebot.adapters.qq import Bot, MessageEvent, GroupAtMessageCreateEvent
 from nonebot.typing import T_State
 
 from ...common.database import Database

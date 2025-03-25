@@ -6,6 +6,9 @@ description = "MaiMaiBot"
 [tool.nonebot]
 plugins = ["src.plugins.chat"]
 plugin_dirs = ["src/plugins"]
+adapters = [
+    { name = "QQ", module_name = "nonebot.adapters.qq" },
+]
 
 [tool.ruff]
 

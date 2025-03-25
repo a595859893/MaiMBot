@@ -4,6 +4,7 @@ import re
 import json
 from dataclasses import dataclass
 from typing import Dict, List, Optional
+from nonebot.adapters.qq import MessageEvent
 
 import urllib3
 from loguru import logger
@@ -306,6 +307,7 @@ class MessageSending(MessageProcessBase):
 
     def __init__(
         self,
+        event: MessageEvent,
         message_id: str,
         chat_stream: ChatStream,
         bot_user_info: UserInfo,
@@ -325,6 +327,7 @@ class MessageSending(MessageProcessBase):
         )
 
         # 发送状态特有属性
+        self.event = event
         self.sender_info = sender_info
         self.reply_to_message_id = reply.message_info.message_id if reply else None
         self.is_head = is_head

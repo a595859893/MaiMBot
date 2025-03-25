@@ -61,16 +61,16 @@ class PromptBuilder:
 
         # 知识构建
         start_time = time.time()
-
+        # embedding 先略过
         prompt_info = ''
         promt_info_prompt = ''
-        prompt_info = await self.get_prompt_info(message_txt, threshold=0.5)
-        if prompt_info:
-            prompt_info = f'''你有以下这些[知识]：{prompt_info}请你记住上面的[
-            知识]，之后可能会用到-'''
+        # prompt_info = await self.get_prompt_info(message_txt, threshold=0.5)
+        # if prompt_info:
+        #     prompt_info = f'''你有以下这些[知识]：{prompt_info}请你记住上面的[
+        #     知识]，之后可能会用到-'''
 
-        end_time = time.time()
-        logger.debug(f"知识检索耗时: {(end_time - start_time):.3f}秒")
+        # end_time = time.time()
+        # logger.debug(f"知识检索耗时: {(end_time - start_time):.3f}秒")
 
         # 获取聊天上下文
         chat_in_group=True

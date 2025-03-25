@@ -83,6 +83,7 @@ class WillingManager:
             reply_probability = 0
             
         self.chat_reply_willing[chat_id] = min(current_willing, 3.0)
+        reply_probability = 1 # for DEBUG，机器人必须@才能回复，所以我不希望它的跳过
         return reply_probability
     
     def change_reply_willing_sent(self, chat_stream:ChatStream):

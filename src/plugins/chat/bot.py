@@ -2,11 +2,10 @@ import re
 import time
 from random import random
 from loguru import logger
-from nonebot.adapters.onebot.v11 import (
+from nonebot.adapters.qq import (
     Bot,
-    GroupMessageEvent,
     MessageEvent,
-    PrivateMessageEvent,
+    GroupAtMessageCreateEvent,
 )
 
 from ..memory_system.memory import hippocampus
@@ -48,58 +47,28 @@ class ChatBot:
 
     async def handle_message(self, event: MessageEvent, bot: Bot) -> None:
         """处理收到的消息"""
-
         self.bot = bot  # 更新 bot 实例
-
-        # 用户屏蔽,不区分私聊/群聊
-        if event.user_id in global_config.ban_user_id:
+        if not isinstance(event, GroupAtMessageCreateEvent):
             return
+        
+        event: GroupAtMessageCreateEvent
+        user_info = UserInfo(
+            user_id=event.get_user_id(),
+            user_nickname=event.get_user_id(), # TODO 从QQ脱节不知道多久的文档里根本找不到获取方法
+            user_cardname=event.get_user_id() or None,
+            platform="qq",
+        )
 
-        # 处理私聊消息
-        if isinstance(event, PrivateMessageEvent):
-            if not global_config.enable_friend_chat:  # 私聊过滤
-                return
-            else:
-                try:
-                    user_info = UserInfo(
-                        user_id=event.user_id,
-                        user_nickname=(await bot.get_stranger_info(user_id=event.user_id, no_cache=True))["nickname"],
-                        user_cardname=None,
-                        platform="qq",
-                    )
-                except Exception as e:
-                    logger.error(f"获取陌生人信息失败: {e}")
-                    return
-                logger.debug(user_info)
-
-                # group_info = GroupInfo(group_id=0, group_name="私聊", platform="qq")
-                group_info = None
-
-        # 处理群聊消息
-        else:
-            # 白名单设定由nontbot侧完成
-            if event.group_id:
-                if event.group_id not in global_config.talk_allowed_groups:
-                    return
-
-            user_info = UserInfo(
-                user_id=event.user_id,
-                user_nickname=event.sender.nickname,
-                user_cardname=event.sender.card or None,
-                platform="qq",
-            )
-
-            group_info = GroupInfo(group_id=event.group_id, group_name=None, platform="qq")
+        group_info = GroupInfo(group_id=event.group_openid, group_name=None, platform="qq")
 
         # group_info = await bot.get_group_info(group_id=event.group_id)
         # sender_info = await bot.get_group_member_info(group_id=event.group_id, user_id=event.user_id, no_cache=True)
-
         message_cq = MessageRecvCQ(
-            message_id=event.message_id,
+            message_id=event.get_session_id(),
             user_info=user_info,
-            raw_message=str(event.original_message),
+            raw_message=str(event.content),
             group_info=group_info,
-            reply_message=event.reply,
+            reply_message=f"{event.get_message()!r}",
             platform="qq",
         )
         message_json = message_cq.to_dict()
@@ -226,6 +195,7 @@ class ChatBot:
                 message_segment = Seg(type="text", data=msg)
                 # logger.debug(f"message_segment: {message_segment}")
                 bot_message = MessageSending(
+                    event=event,
                     message_id=think_id,
                     chat_stream=chat,
                     bot_user_info=bot_user_info,
@@ -266,6 +236,7 @@ class ChatBot:
 
                     message_segment = Seg(type="emoji", data=emoji_cq)
                     bot_message = MessageSending(
+                        event=event,
                         message_id=think_id,
                         chat_stream=chat,
                         bot_user_info=bot_user_info,

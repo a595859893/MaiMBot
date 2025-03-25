@@ -39,8 +39,8 @@ class Message_Sender:
                 and message_send.message_info.group_info.group_id
             ):
                 try:
-                    await self._current_bot.send_group_msg(
-                        group_id=message.message_info.group_info.group_id,
+                    await self._current_bot.send(
+                        event=message.event,
                         message=message_send.raw_message,
                         auto_escape=False,
                     )
