@@ -3,10 +3,10 @@ import time
 from typing import Dict, List, Optional, Union
 
 from loguru import logger
-from nonebot.adapters.onebot.v11 import Bot
+from nonebot.adapters.qq import Bot
 
 from .message_cq import MessageSendCQ
-from .message import MessageSending, MessageThinking, MessageRecv, MessageSet
+from .message import MessageSending, MessageThinking, MessageSet
 
 from .storage import MessageStorage
 from .config import global_config
@@ -41,7 +41,7 @@ class Message_Sender:
                 try:
                     await self._current_bot.send(
                         event=message.event,
-                        message=message_send.raw_message,
+                        message=message_send.bot_message,
                         auto_escape=False,
                     )
                     logger.success(f"[调试] 发送消息{message.processed_plain_text}成功")

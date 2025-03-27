@@ -110,9 +110,9 @@ class LLM_request:
 
     async def _execute_request(
         self,
-        endpoint: str,
         prompt: str = None,
         retry_policy: dict = None,
+        image_base64: str = None,
     ):
         """统一请求执行入口
         Args:
@@ -145,14 +145,28 @@ class LLM_request:
             500: "服务器内部故障",
             503: "服务器负载过高",
         }
+        content = []
+        if prompt is not None:
+            content.append({"type": "text", "text": prompt})
+
+        if image_base64 is not None:
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"},
+                }
+            )
+        else:
+            # 似乎有些模型还不支持openai的新版本格式，对于这部分使用旧版本处理
+            content = prompt
 
         payload = {
             "model": self.model_name,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [{"role": "user", "content": content}],
             "stream": False,
             "max_tokens": global_config.max_response_length,
         }
-
+        logger.info(f"url:{self.client.base_url}, 请求体: {payload}")
         for retry in range(policy["max_retries"]):
             try:
                 # TODO: 感觉后续可以基于状态调整temperature
@@ -183,9 +197,7 @@ class LLM_request:
     async def generate_response(self, prompt: str) -> Tuple[str, str]:
         """根据输入的提示生成模型的异步响应"""
 
-        content, reasoning_content = await self._execute_request(
-            endpoint="/chat/completions", prompt=prompt
-        )
+        content, reasoning_content = await self._execute_request(prompt=prompt)
         return content, reasoning_content
 
     async def generate_response_for_image(
@@ -194,7 +206,7 @@ class LLM_request:
         """根据输入的提示和图片生成模型的异步响应"""
 
         content, reasoning_content = await self._execute_request(
-            endpoint="/chat/completions", prompt=prompt, image_base64=image_base64
+            prompt=prompt, image_base64=image_base64
         )
         return content, reasoning_content
 
@@ -211,7 +223,7 @@ class LLM_request:
         }
 
         content, reasoning_content = await self._execute_request(
-            endpoint="/chat/completions", payload=data, prompt=prompt
+            payload=data, prompt=prompt
         )
         return content, reasoning_content
 
@@ -224,25 +236,14 @@ class LLM_request:
         Returns:
             list: embedding向量，如果失败则返回None
         """
-
-        def embedding_handler(result):
-            """处理响应"""
-            if "data" in result and len(result["data"]) > 0:
-                return result["data"][0].get("embedding", None)
-            return None
-
-        embedding = await self._execute_request(
-            endpoint="/embeddings",
-            prompt=text,
-            payload={
-                "model": self.model_name,
-                "input": text,
-                "encoding_format": "float",
-            },
-            retry_policy={"max_retries": 2, "base_wait": 6},
-            response_handler=embedding_handler,
-        )
-        return embedding
+        payload = {
+            "model": "text-embedding-v3",
+            "input": text,
+            "dimensions": 1024,
+            "encoding_format": "float",
+        }
+        embedding = await self.client.embeddings.create(**payload)
+        return embedding.data[0].embedding
 
 
 def compress_base64_image_by_scale(
