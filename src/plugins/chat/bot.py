@@ -79,6 +79,7 @@ class ChatBot:
             message = MessageRecv(message_data)
             groupinfo = message.message_info.group_info
             logger.debug(f"处理消息:{str(message_data)[:50]}...")
+            logger.debug(f"{global_config.enable_pfc_chatting} {global_config.enable_friend_chat} {groupinfo}")
 
             if global_config.enable_pfc_chatting:
                 try:

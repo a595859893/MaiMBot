@@ -197,6 +197,9 @@ class WillingManager:
             self.chat_last_sender_id[chat_id] = sender_id
 
         self.chat_reply_willing[chat_id] = min(current_willing, 3.0)
+
+        if chat_stream.platform == "maim-qq-adapter":
+            reply_probability = 1
         return reply_probability
 
     def change_reply_willing_sent(self, chat_stream: ChatStream):

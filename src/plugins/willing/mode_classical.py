@@ -65,6 +65,10 @@ class WillingManager:
 
             if chat_stream.group_info.group_id in config.talk_frequency_down_groups:
                 reply_probability = reply_probability / config.down_frequency_rate
+        
+        print(chat_stream, chat_stream.platform)
+        if chat_stream.platform == "official-qq":
+            reply_probability = 1
 
         return reply_probability
 
